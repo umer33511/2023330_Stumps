@@ -1,8 +1,4 @@
-#include <iostream>
-#include <queue>
-#include <stack>
-#include <string>
-
+#include <bits/stdc++.h>
 using namespace std;
 
 struct Player {
@@ -63,9 +59,6 @@ public:
 
     void pushRuns(int r) {
         runs.push(r);
-        if (r > 0) { // Only update if runs were scored
-            bowlingTeam->bowlerPerformance.pushRuns(r); // Update bowling team's performance
-        }
     }
 
     int popWicket() {
@@ -139,15 +132,11 @@ public:
     int ballsInCurrentOver;
     int target;
     int currentScore;
-    BowlerPerformance bowlerPerformance; // Shared performance for both teams
+    BowlerPerformance bowlerPerformance;
 
 private:
     Team* battingTeam;
     Team* bowlingTeam;
-
-    void swapTeams() {
-        swap(battingTeam, bowlingTeam);  // swap pointers for efficient team switching
-    }
 
 public:
     Match(Team t1, Team t2, int o) : team1(t1), team2(t2), overs(o), currentOver(0), ballsInCurrentOver(0), currentScore(0) {
@@ -158,8 +147,23 @@ public:
 
     void playInnings() {
         while (currentOver < overs && battingTeam->totalWickets < 10) {
-            // Simulate a ball
-            int runs = rand() % 7; // Random runs from 0 to 6
+            cout << "Enter the runs scored on this ball (0-6): ";
+            string input;
+            cin >> input;
+
+            int runs;
+            if (input == "w") {
+                currentScore++;
+                bowlerPerformance.pushRuns(1);
+                continue;
+            } else if (input == "nb") {
+                currentScore++;
+                bowlerPerformance.pushRuns(1);
+                continue;
+            } else {
+                runs = stoi(input);
+            }
+
             bool isFour = runs == 4;
             bool isSix = runs == 6;
 
@@ -167,18 +171,11 @@ public:
             currentScore += runs;
             bowlerPerformance.pushRuns(runs);
 
-            if (runs == 0) {
-                ballsInCurrentOver++;
-                if (ballsInCurrentOver == 6) {
-                    currentOver++;
-                    ballsInCurrentOver = 0;
-                    swapTeams(); // Switch teams after each over
-                }
-            } else {
-                battingTeam->rotateStrike();
-                ballsInCurrentOver = 0;
+            ballsInCurrentOver++;
+            if (ballsInCurrentOver == 6) {
                 currentOver++;
-                swapTeams(); // Switch teams after a boundary or wicket
+                ballsInCurrentOver = 0;
+                swapTeams(); // Switch teams after each over
             }
 
             if (runs == 0 && rand() % 10 == 0) { // Random wicket
@@ -186,7 +183,25 @@ public:
                 battingTeam->totalWickets++;
                 bowlerPerformance.pushWicket(1);
             }
+
+            cout << "Current Score: " << currentScore << "/" << battingTeam->totalWickets << endl;
         }
+    }
+
+    void declareWinner() {
+        if (team1.totalRuns > team2.totalRuns) {
+            cout << "Team 1 wins!" << endl;
+        } else if (team2.totalRuns > team1.totalRuns) {
+            cout << "Team 2 wins!" << endl;
+        } else {
+            cout << "Match tied!" << endl;
+        }
+    }
+
+    void swapTeams() {
+        Team* temp = battingTeam;
+        battingTeam = bowlingTeam;
+        bowlingTeam = temp;
     }
 };
 
@@ -194,7 +209,7 @@ struct MatchNode {
     Match match;
     MatchNode* next;
 
-    MatchNode(Match m) : match(m), next(NULL) {}
+    MatchNode(Match m) : match(m), next(nullptr) {}
 };
 
 class MatchHistory {
@@ -219,8 +234,26 @@ public:
             cout << "Team 2: " << current->match.team2.name << "\n";
             cout << "Overs: " << current->match.overs << "\n";
             cout << "Target: " << current->match.target << "\n";
-            // Add more details as needed
             current = current->next;
+        }
+    }
+
+    void saveHistoryToFile(const string& filename) {
+        ofstream file(filename);
+        if (file.is_open()) {
+            MatchNode* current = head;
+            while (current != nullptr) {
+                file << "Match Details:\n";
+                file << "Team 1: " << current->match.team1.name << "\n";
+                file << "Team 2: " << current->match.team2.name << "\n";
+                file << "Overs: " << current->match.overs << "\n";
+                file << "Target: " << current->match.target << "\n";
+                current = current->next;
+            }
+            file.close();
+            cout << "Match history saved to " << filename << endl;
+        } else {
+            cout << "Error: Unable to open file " << filename << endl;
         }
     }
 };
@@ -228,13 +261,13 @@ public:
 int main() {
     MatchHistory history;
 
+    int choice;
     do {
         cout << "\nCricket Scoring System\n";
         cout << "1. Start New Match\n";
         cout << "2. View Match History\n";
         cout << "3. Exit\n";
         cout << "Enter your choice: ";
-        int choice;
         cin >> choice;
 
         switch (choice) {
@@ -252,8 +285,18 @@ int main() {
 
                 Match match(team1, team2, overs);
                 match.playInnings();
-                // Second innings can be simulated similarly
+
+                // Second innings
+                match.swapTeams();
+                match.target = match.team1.totalRuns + 1;
+                match.currentScore = 0;
+                match.currentOver = 0;
+                match.ballsInCurrentOver = 0;
+                match.playInnings();
+
+                match.declareWinner();
                 history.addMatch(match);
+                history.saveHistoryToFile("match_history.txt");
                 break;
             }
             case 2: {
@@ -266,6 +309,7 @@ int main() {
             }
             default: {
                 cout << "Invalid choice! Please select again.\n";
+                break;
             }
         }
     } while (choice != 3);
