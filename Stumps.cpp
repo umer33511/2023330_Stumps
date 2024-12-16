@@ -1,7 +1,11 @@
 #include <iostream>
+#include <queue>
+#include <stack>
+#include <string>
+
 using namespace std;
 
-struct Player{
+struct Player {
     string name;
     int runs;
     int balls;
@@ -48,7 +52,6 @@ public:
     }
 };
 
-// Stack to represent bowler performance
 class BowlerPerformance {
 public:
     stack<int> wickets;
@@ -60,6 +63,9 @@ public:
 
     void pushRuns(int r) {
         runs.push(r);
+        if (r > 0) { // Only update if runs were scored
+            bowlingTeam->bowlerPerformance.pushRuns(r); // Update bowling team's performance
+        }
     }
 
     int popWicket() {
@@ -85,7 +91,6 @@ public:
     }
 };
 
-// Class to represent a Team
 class Team {
 public:
     string name;
@@ -98,7 +103,7 @@ public:
             string playerName;
             cout << "Enter name of player " << (i + 1) << ": ";
             cin >> playerName;
-            battingOrder.batsmen.push(Player (playerName));
+            battingOrder.enqueue(Player(playerName));
         }
     }
 
@@ -125,7 +130,7 @@ public:
     }
 };
 
-class Match{
+class Match {
 public:
     Team team1;
     Team team2;
@@ -134,14 +139,54 @@ public:
     int ballsInCurrentOver;
     int target;
     int currentScore;
-    BowlerPerformance bowlerPerformance;
+    BowlerPerformance bowlerPerformance; // Shared performance for both teams
+
+private:
     Team* battingTeam;
     Team* bowlingTeam;
 
+    void swapTeams() {
+        swap(battingTeam, bowlingTeam);  // swap pointers for efficient team switching
+    }
+
+public:
     Match(Team t1, Team t2, int o) : team1(t1), team2(t2), overs(o), currentOver(0), ballsInCurrentOver(0), currentScore(0) {
         target = team1.totalRuns + 1; // Target for team 2
         battingTeam = &team1;
         bowlingTeam = &team2;
+    }
+
+    void playInnings() {
+        while (currentOver < overs && battingTeam->totalWickets < 10) {
+            // Simulate a ball
+            int runs = rand() % 7; // Random runs from 0 to 6
+            bool isFour = runs == 4;
+            bool isSix = runs == 6;
+
+            battingTeam->updateScore(runs, 1, isFour, isSix);
+            currentScore += runs;
+            bowlerPerformance.pushRuns(runs);
+
+            if (runs == 0) {
+                ballsInCurrentOver++;
+                if (ballsInCurrentOver == 6) {
+                    currentOver++;
+                    ballsInCurrentOver = 0;
+                    swapTeams(); // Switch teams after each over
+                }
+            } else {
+                battingTeam->rotateStrike();
+                ballsInCurrentOver = 0;
+                currentOver++;
+                swapTeams(); // Switch teams after a boundary or wicket
+            }
+
+            if (runs == 0 && rand() % 10 == 0) { // Random wicket
+                battingTeam->nextBatsman();
+                battingTeam->totalWickets++;
+                bowlerPerformance.pushWicket(1);
+            }
+        }
     }
 };
 
@@ -152,8 +197,35 @@ struct MatchNode {
     MatchNode(Match m) : match(m), next(NULL) {}
 };
 
-int main(){
-        int choice;
+class MatchHistory {
+public:
+    MatchNode* head;
+
+    MatchHistory() {
+        head = nullptr;
+    }
+
+    void addMatch(Match match) {
+        MatchNode* newNode = new MatchNode(match);
+        newNode->next = head;
+        head = newNode;
+    }
+
+    void displayHistory() {
+        MatchNode* current = head;
+        while (current != nullptr) {
+            cout << "Match Details:\n";
+            cout << "Team 1: " << current->match.team1.name << "\n";
+            cout << "Team 2: " << current->match.team2.name << "\n";
+            cout << "Overs: " << current->match.overs << "\n";
+            cout << "Target: " << current->match.target << "\n";
+            // Add more details as needed
+            current = current->next;
+        }
+    }
+};
+
+int main() {
     MatchHistory history;
 
     do {
@@ -162,21 +234,41 @@ int main(){
         cout << "2. View Match History\n";
         cout << "3. Exit\n";
         cout << "Enter your choice: ";
+        int choice;
         cin >> choice;
 
         switch (choice) {
-            case 1:
-                startMatch(history);
+            case 1: {
+                int playerCount;
+                cout << "Enter number of players per team: ";
+                cin >> playerCount;
+
+                Team team1("Team 1", playerCount);
+                Team team2("Team 2", playerCount);
+
+                int overs;
+                cout << "Enter number of overs per innings: ";
+                cin >> overs;
+
+                Match match(team1, team2, overs);
+                match.playInnings();
+                // Second innings can be simulated similarly
+                history.addMatch(match);
                 break;
-            case 2:
+            }
+            case 2: {
                 history.displayHistory();
                 break;
-            case 3:
+            }
+            case 3: {
                 cout << "Exiting the system. Goodbye!\n";
                 break;
-            default:
+            }
+            default: {
                 cout << "Invalid choice! Please select again.\n";
+            }
         }
     } while (choice != 3);
-  return 0;
+
+    return 0;
 }
