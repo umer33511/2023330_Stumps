@@ -79,20 +79,21 @@ public:
         }
     }
 
-    void updateScore(int runs, int balls, bool isFour, bool isSix) {
-        Player& currentBatsman = battingOrder.front();
-        currentBatsman.runs += runs;
-        batsmanScores[currentBatsman.name] += runs;
-        currentBatsman.balls += balls;
-        if (isFour) currentBatsman.fours++;
-        if (isSix) currentBatsman.sixes++;
-        currentBatsman.strikeRate = (currentBatsman.runs / (float)currentBatsman.balls) * 100;
+    void updateScore(Player& batsman, int runs, int balls, bool isFour, bool isSix) {
+        batsman.runs += runs;
+        batsmanScores[batsman.name] += runs;
+        batsman.balls += balls;
+        if (isFour) batsman.fours++;
+        if (isSix) batsman.sixes++;
+        batsman.strikeRate = (batsman.runs / (float)batsman.balls) * 100;
         totalRuns += runs;
     }
 
-    void nextBatsman() {
-        battingOrder.dequeue();
-        totalWickets++;
+    void nextBatsman(Player& currentBatsman) {
+        if (!battingOrder.empty()) {
+            currentBatsman = battingOrder.dequeue();
+            totalWickets++;
+        }
     }
 
     bool allOut() {
@@ -124,6 +125,10 @@ public:
 
     void playInnings(Team& battingTeam, string bowlerName) {
         int ballsPlayed = 0;
+        int currentOver = 0;
+        Player striker = battingTeam.battingOrder.dequeue();
+        Player nonStriker = battingTeam.battingOrder.dequeue();
+
         while (ballsPlayed < overs * 6 && !battingTeam.allOut()) {
             string input;
             cout << "Enter ball outcome (runs: 0-6, w for wicket, nb for no-ball): ";
@@ -131,17 +136,31 @@ public:
 
             if (input == "w") {
                 bowlerPerformance.addWicket(bowlerName);
-                battingTeam.nextBatsman();
-                cout << "Wicket! Total Wickets: " << battingTeam.totalWickets << endl;
+                cout << "Wicket! Total Wickets: " << battingTeam.totalWickets + 1 << endl;
+                battingTeam.nextBatsman(striker);
             } else if (input == "nb") {
                 battingTeam.totalRuns++;
                 cout << "No Ball! 1 run added. Total Runs: " << battingTeam.totalRuns << endl;
             } else {
                 int runs = stoi(input);
-                battingTeam.updateScore(runs, 1, runs == 4, runs == 6);
+                battingTeam.updateScore(striker, runs, 1, runs == 4, runs == 6);
+                cout << "Batsman: " << striker.name 
+                     << " | Runs: " << striker.runs 
+                     << " | Balls: " << striker.balls
+                     << " | Strike Rate: " << fixed << setprecision(2) << striker.strikeRate << endl;
+                if (runs % 2 != 0) {
+                    swap(striker, nonStriker);
+                }
             }
             ballsPlayed++;
-            cout << "Current Score: " << battingTeam.totalRuns << "/" << battingTeam.totalWickets << endl;
+            currentOver = ballsPlayed / 6;
+            cout << "Current Over: " << currentOver << "." << ballsPlayed % 6 << " | Current Score: " << battingTeam.totalRuns << "/" << battingTeam.totalWickets << endl;
+            
+            if (ballsPlayed % 6 == 0) {
+                swap(striker, nonStriker);
+                cout << "End of Over! Striker and Non-Striker swapped." << endl;
+            }
+
             if (target > 0 && battingTeam.totalRuns >= target) {
                 cout << battingTeam.name << " has chased the target successfully!" << endl;
                 return;
