@@ -43,37 +43,22 @@ public:
 
 class BowlerPerformance {
 public:
-    stack<int> wickets;
-    stack<int> runs;
+    map<string, int> wickets;
 
-    void pushWicket(int w) {
-        wickets.push(w);
+    void addWicket(string bowlerName) {
+        wickets[bowlerName]++;
     }
 
-    void pushRuns(int r) {
-        runs.push(r);
-    }
+    void displayAndSaveWickets(ofstream& file) {
+        vector<pair<string, int>> sortedWickets(wickets.begin(), wickets.end());
+        sort(sortedWickets.begin(), sortedWickets.end(), [](const pair<string, int>& a, const pair<string, int>& b) {
+            return a.second > b.second;
+        });
 
-    int popWicket() {
-        if (wickets.empty()) {
-            throw runtime_error("No wickets to pop");
+        file << "Bowler Wickets (Descending Order):\n";
+        for (auto& [name, count] : sortedWickets) {
+            file << name << ": " << count << " wickets\n";
         }
-        int w = wickets.top();
-        wickets.pop();
-        return w;
-    }
-
-    int popRuns() {
-        if (runs.empty()) {
-            throw runtime_error("No runs to pop");
-        }
-        int r = runs.top();
-        runs.pop();
-        return r;
-    }
-
-    bool empty() {
-        return wickets.empty() && runs.empty();
     }
 };
 
@@ -83,6 +68,7 @@ public:
     BattingOrder battingOrder;
     int totalRuns;
     int totalWickets;
+    map<string, int> batsmanScores; // Track scores of batsmen
 
     Team(string n, int playerCount) : name(n), totalRuns(0), totalWickets(0) {
         for (int i = 0; i < playerCount; i++) {
@@ -96,6 +82,7 @@ public:
     void updateScore(int runs, int balls, bool isFour, bool isSix) {
         Player& currentBatsman = battingOrder.front();
         currentBatsman.runs += runs;
+        batsmanScores[currentBatsman.name] += runs;
         currentBatsman.balls += balls;
         if (isFour) currentBatsman.fours++;
         if (isSix) currentBatsman.sixes++;
@@ -111,6 +98,18 @@ public:
     bool allOut() {
         return battingOrder.empty();
     }
+
+    void displayAndSaveBatsmanScores(ofstream& file) {
+        vector<pair<string, int>> sortedScores(batsmanScores.begin(), batsmanScores.end());
+        sort(sortedScores.begin(), sortedScores.end(), [](const pair<string, int>& a, const pair<string, int>& b) {
+            return a.second > b.second;
+        });
+
+        file << "Batsman Scores (Descending Order):\n";
+        for (auto& [name, score] : sortedScores) {
+            file << name << ": " << score << " runs\n";
+        }
+    }
 };
 
 class Match {
@@ -119,10 +118,11 @@ public:
     Team team2;
     int overs;
     int target;
+    BowlerPerformance bowlerPerformance;
 
     Match(Team t1, Team t2, int o) : team1(t1), team2(t2), overs(o), target(0) {}
 
-    void playInnings(Team& battingTeam) {
+    void playInnings(Team& battingTeam, string bowlerName) {
         int ballsPlayed = 0;
         while (ballsPlayed < overs * 6 && !battingTeam.allOut()) {
             string input;
@@ -130,6 +130,7 @@ public:
             cin >> input;
 
             if (input == "w") {
+                bowlerPerformance.addWicket(bowlerName);
                 battingTeam.nextBatsman();
                 cout << "Wicket! Total Wickets: " << battingTeam.totalWickets << endl;
             } else if (input == "nb") {
@@ -150,12 +151,53 @@ public:
     }
 
     void startMatch() {
-        cout << "\nTeam 1 Batting:\n";
-        playInnings(team1);
-        target = team1.totalRuns + 1;
-        cout << "Target for Team 2: " << target << "\n";
-        cout << "\nTeam 2 Batting:\n";
-        playInnings(team2);
+        string tossChoice, bowler1, bowler2;
+        cout << "Enter your choice for the toss (heads/tails): ";
+        cin >> tossChoice;
+
+        srand(time(0));
+        string tossResult = (rand() % 2 == 0) ? "heads" : "tails";
+        cout << "Toss Result: " << tossResult << endl;
+
+        Team* tossWinner;
+        Team* tossLoser;
+
+        if (tossChoice == tossResult) {
+            cout << "Team 1 wins the toss!\n";
+            tossWinner = &team1;
+            tossLoser = &team2;
+        } else {
+            cout << "Team 2 wins the toss!\n";
+            tossWinner = &team2;
+            tossLoser = &team1;
+        }
+
+        string choice;
+        cout << tossWinner->name << ", choose to bat or bowl (bat/bowl): ";
+        cin >> choice;
+
+        if (choice == "bat") {
+            cout << "\n" << tossWinner->name << " is batting first.\n";
+            cout << "Enter name of Bowler for " << tossLoser->name << ": ";
+            cin >> bowler1;
+            playInnings(*tossWinner, bowler1);
+            target = tossWinner->totalRuns + 1;
+            cout << "Target for " << tossLoser->name << ": " << target << "\n";
+            cout << "Enter name of Bowler for " << tossWinner->name << ": ";
+            cin >> bowler2;
+            playInnings(*tossLoser, bowler2);
+        } else {
+            cout << "\n" << tossLoser->name << " is batting first.\n";
+            cout << "Enter name of Bowler for " << tossWinner->name << ": ";
+            cin >> bowler1;
+            playInnings(*tossLoser, bowler1);
+            target = tossLoser->totalRuns + 1;
+            cout << "Target for " << tossWinner->name << ": " << target << "\n";
+            cout << "Enter name of Bowler for " << tossLoser->name << ": ";
+            cin >> bowler2;
+            playInnings(*tossWinner, bowler2);
+        }
+
         declareWinner();
         saveMatchHistory();
     }
@@ -183,6 +225,9 @@ public:
             } else {
                 file << "Result: Match Drawn!\n";
             }
+            team1.displayAndSaveBatsmanScores(file);
+            team2.displayAndSaveBatsmanScores(file);
+            bowlerPerformance.displayAndSaveWickets(file);
             file << "------------------------------------------\n";
             file.close();
             cout << "Match history saved to file." << endl;
