@@ -1,5 +1,7 @@
 #include <bits/stdc++.h>
+#include "sorting.cpp"
 using namespace std;
+
 
 struct Player {
     string name;
@@ -50,16 +52,26 @@ public:
     }
 
     void displayAndSaveWickets(ofstream& file) {
-        vector<pair<string, int>> sortedWickets(wickets.begin(), wickets.end());
-        sort(sortedWickets.begin(), sortedWickets.end(), [](const pair<string, int>& a, const pair<string, int>& b) {
-            return a.second > b.second;
-        });
+    int size = wickets.size();
+    int* wicketsCount = new int[size];
+    string* names = new string[size];
 
-        file << "Bowler Wickets (Descending Order):\n";
-        for (auto& [name, count] : sortedWickets) {
-            file << name << ": " << count << " wickets\n";
-        }
+    int index = 0;
+    for(auto& [name, count] : wickets) {
+        wicketsCount[index] = count;
+        names[index++] = name;
     }
+
+    countingSort(wicketsCount, names, size);
+
+    file << "Bowler Wickets (Descending Order):\n";
+    for (int i = 0; i < size; i++) {
+        file << names[i] << ": " << wicketsCount[i] << " wickets\n";
+    }
+
+    delete[] wicketsCount;
+    delete[] names;
+}
 };
 
 class Team {
@@ -101,16 +113,26 @@ public:
     }
 
     void displayAndSaveBatsmanScores(ofstream& file) {
-        vector<pair<string, int>> sortedScores(batsmanScores.begin(), batsmanScores.end());
-        sort(sortedScores.begin(), sortedScores.end(), [](const pair<string, int>& a, const pair<string, int>& b) {
-            return a.second > b.second;
-        });
+    int size = batsmanScores.size();
+    int* scores = new int[size];
+    string* names = new string[size];
 
-        file << "Batsman Scores (Descending Order):\n";
-        for (auto& [name, score] : sortedScores) {
-            file << name << ": " << score << " runs\n";
-        }
+    int index = 0;
+    for (auto& [name, score] : batsmanScores) {
+        scores[index] = score;
+        names[index++] = name;
     }
+
+    mergeSort(scores, names, 0, size - 1);
+
+    file << "Batsman Scores (Descending Order):\n";
+    for (int i = 0; i < size; i++) {
+        file << names[i] << ": " << scores[i] << " runs\n";
+    }
+
+    delete[] scores;
+    delete[] names;
+}
 };
 
 class Match {
