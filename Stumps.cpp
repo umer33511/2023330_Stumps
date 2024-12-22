@@ -5,7 +5,7 @@
 using namespace std;
 
 int playerCount;
-
+// Class for handling batting order of each team
 class BattingOrder {
 public:
     queue<Player> batsmen;
@@ -28,7 +28,7 @@ public:
         return batsmen.empty();
     }
 };
-
+// Node for linked list to store bowlers
 struct BowlerNode {
     string name;
     string teamName;
@@ -39,7 +39,7 @@ struct BowlerNode {
 
     BowlerNode(string n, string team) : name(n), teamName(team), wickets(0), runsConceded(0), balls(0), next(nullptr) {}
 };
-
+// Class for bowlers containing linked list insertion, traversal etc
 class BowlerPerformance {
 public:
     BowlerNode* head;
@@ -95,7 +95,7 @@ public:
                 int ballsBowled = curr->balls;
                 stack.push(curr->name, curr->wickets, curr->runsConceded, ballsBowled);
             }
-            curr = curr->next; // Ensure this advances properly
+            curr = curr->next;
         }
 
         stack.sortStack();
