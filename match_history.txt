@@ -1,0 +1,23 @@
+Match Summary:
+Team 1: pak | Runs: 54 | Wickets: 4
+Team 2: ind | Runs: 51 | Wickets: 4
+pak Wins by 3 runs!
+Batsman Scores of pak (Descending Order):
+e: 27 runs
+q: 16 runs
+t: 9 runs
+r: 1 runs
+Batsman Scores of ind (Descending Order):
+a: 28 runs
+s: 21 runs
+g: 1 runs
+d: 0 runs
+Bowler Performance for team pak (Sorted by Wickets):
+r: 2 wickets, 13 runs, 6 balls
+y: 1 wickets, 28 runs, 6 balls
+t: 1 wickets, 10 runs, 6 balls
+Bowler Performance for team ind (Sorted by Wickets):
+f: 2 wickets, 12 runs, 6 balls
+h: 1 wickets, 17 runs, 6 balls
+g: 1 wickets, 26 runs, 6 balls
+------------------------------------------
