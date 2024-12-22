@@ -1,19 +1,11 @@
 #include <bits/stdc++.h>
 #include "sorting.cpp"
 #include "BowlerStack for sorting.cpp"
+#include "BattingOrderQueue.cpp"
 using namespace std;
 
-struct Player {
-    string name;
-    int runs;
-    int balls;
-    int fours;
-    int sixes;
-    float strikeRate;
-
-    Player(string n) : name(n), runs(0), balls(0), fours(0), sixes(0), strikeRate(0.0) {}
-};
 int playerCount;
+
 class BattingOrder {
 public:
     queue<Player> batsmen;
@@ -294,7 +286,6 @@ public:
                 cin >> extras;
                 bowlerPerformance.addOrUpdateBowler(bowlerName,bowlingTeam.name,1+extras,0,false);
                 battingTeam.updateScore(striker, extras, 1, extras == 4, extras == 6);
-                battingTeam.totalRuns += 1 + extras;
                 currentPartnershipRuns += 1 + extras;
             } else if (input == "wd") {
                 battingTeam.totalRuns++;
@@ -302,7 +293,11 @@ public:
                 bowlerPerformance.addOrUpdateBowler(bowlerName,bowlingTeam.name,1,0,false);
             } else {
                 int runs = stoi(input);
-                battingTeam.totalRuns += runs;
+                if(runs>6 || runs<0){
+                	cout<<"Enter valid runs: "<<endl;
+                	cin>>input;
+                	runs=stoi(input);
+				}
                 currentPartnershipRuns += runs;
 				bowlerPerformance.addOrUpdateBowler(bowlerName,bowlingTeam.name, runs,1, false);
                 battingTeam.updateScore(striker, runs, 1, runs == 4, runs == 6);
