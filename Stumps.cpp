@@ -133,7 +133,7 @@ public:
     }
 
 
-    void updateScore(Player& batsman, int runs, int balls, bool isFour, bool isSix) {
+    void updateScore(Player& batsman, int runs, int balls, bool isFour, bool isSix) { // update score function to update scores for every batsman.
         batsman.runs += runs;
         batsmanScores[batsman.name] += runs;
         batsman.balls += balls;
@@ -144,15 +144,15 @@ public:
     }
 
     void nextBatsman(Player& currentBatsman) {
-        currentBatsman = battingOrder.dequeue();
-        totalWickets++;
+        currentBatsman = battingOrder.dequeue(); // using enqueue to remove batsman
+        totalWickets++; // increment total wickets
     }
 
     bool allOut() {
         return totalWickets == size - 1;
     }
 
-    void displayAndSaveBatsmanScores(ofstream& file) {
+    void displayAndSaveBatsmanScores(ofstream& file) { // storing and displaying batter scores through file handling. 
         int size = batsmanScores.size();
         int* scores = new int[size];
         string* names = new string[size];
@@ -163,7 +163,7 @@ public:
             names[index++] = name;
         }
 
-        mergeSort(scores, names, 0, size - 1);
+        mergeSort(scores, names, 0, size - 1); // merge sorting to sort batsman scores.
 
         for (int i = 0; i < size; i++) {
             file << names[i] << ": " << scores[i] << " runs\n";
@@ -175,7 +175,7 @@ public:
 
 };
 
-class Match {
+class Match { // Match class for match simualtion 
 public:
     Team team1;
     Team team2;
@@ -184,7 +184,7 @@ public:
     BowlerPerformance bowlerPerformance;
 
     // Separate adjacency matrices for partnerships
-    int** adjMatrixTeam1;
+    int** adjMatrixTeam1; 
     int** adjMatrixTeam2;
 
     // Player names mapped by indices
@@ -212,7 +212,7 @@ public:
     ~Match() {
         for (int i = 0; i < playerCount; i++) {
             delete[] adjMatrixTeam1[i];
-            delete[] adjMatrixTeam2[i];
+            delete[] adjMatrixTeam2[i]; // to avoid memory leaks
         }
         delete[] adjMatrixTeam1;
         delete[] adjMatrixTeam2;
@@ -239,9 +239,9 @@ public:
         }
     }
 
-    void playInnings(Team& battingTeam, Team& bowlingTeam, int** adjMatrix, string* playerNames) {
+    void playInnings(Team& battingTeam, Team& bowlingTeam, int** adjMatrix, string* playerNames) { // play innings function to simulate an innings.
         int ballsPlayed = 0;
-        int currentOver = 0;
+        int currentOver = 0; 
         Player striker = battingTeam.battingOrder.dequeue();
         Player nonStriker = battingTeam.battingOrder.dequeue();
         int strikerIndex = 0;
@@ -306,7 +306,7 @@ public:
                      << " | Balls: " << striker.balls
                      << " | Strike Rate: " << fixed << setprecision(2) << striker.strikeRate << endl;
                 if (runs % 2 != 0) {
-                    swap(striker, nonStriker);
+                    swap(striker, nonStriker); // swapping striker and non striker after every odd runs or over.
                     swap(strikerIndex, nonStrikerIndex);
                 }
                 ballsPlayed++;
@@ -337,7 +337,7 @@ public:
 
 void startMatch() {
     string tossChoice;
-    cout << "Enter your choice for the toss (heads/tails): ";
+    cout << "Enter your choice for the toss (heads/tails): "; // start match function for user input displays
     cin >> tossChoice;
 
     srand(time(0));
@@ -386,8 +386,8 @@ void startMatch() {
 
 
 
-    void declareWinner() {
-        if (team2.totalRuns >= target) {
+    void declareWinner() { // functions to declare winner according to cricket rules
+        if (team2.totalRuns >= target) { 
             cout << team2.name << " Wins by " << team1.size - team2.totalWickets - 1 << " wickets!" << endl;
         } else if (team1.totalRuns >= target) {
             cout << team1.name << " Wins by " << team1.size - team1.totalWickets - 1 << " wickets!" << endl;
@@ -400,7 +400,7 @@ void startMatch() {
         }
     }
 
-    void saveMatchHistory() {
+    void saveMatchHistory() { // saving match history in match summary file through file handling.
         ofstream file("match_history.txt", ios::app);
         if (file.is_open()) {
             file << "Match Summary:\n";
@@ -436,7 +436,7 @@ void startMatch() {
 int main() {
     int choice;
     do {
-        cout << "\nCricket Scoring System\n";
+        cout << "\nCricket Scoring System\n"; // Main Menu 
         cout << "1. Start New Match\n";
         cout << "2. Exit\n";
         cout << "Enter your choice: ";
