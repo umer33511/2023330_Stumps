@@ -335,39 +335,56 @@ public:
         cout << "Innings Over: " << battingTeam.totalRuns << "/" << battingTeam.totalWickets << endl;
     }
 
-    void startMatch() {
-        string tossChoice;
-        cout << "Enter your choice for the toss (heads/tails): ";
-        cin >> tossChoice;
+void startMatch() {
+    string tossChoice;
+    cout << "Enter your choice for the toss (heads/tails): ";
+    cin >> tossChoice;
 
-        srand(time(0));
-        string tossResult = (rand() % 2 == 0) ? "heads" : "tails";
-        cout << "Toss Result: " << tossResult << endl;
+    srand(time(0));
+    string tossResult = (rand() % 2 == 0) ? "heads" : "tails";
+    cout << "Toss Result: " << tossResult << endl;
 
-        Team* tossWinner = (tossChoice == tossResult) ? &team1 : &team2;
-        Team* tossLoser = (tossWinner == &team1) ? &team2 : &team1;
+    Team* tossWinner = (tossChoice == tossResult) ? &team1 : &team2;
+    Team* tossLoser = (tossWinner == &team1) ? &team2 : &team1;
 
-        string choice;
-        cout << tossWinner->name << ", choose to bat or bowl (bat/bowl): ";
-        cin >> choice;
+    string choice;
+    cout << tossWinner->name << ", choose to bat or bowl (bat/bowl): ";
+    cin >> choice;
 
-        if (choice == "bat") {
-            playInnings(*tossWinner, *tossLoser, adjMatrixTeam1, playerNamesTeam1);
-            target = tossWinner->totalRuns + 1;
-            cout << "Target for " << tossLoser->name << ": " << target << "\n";
-            playInnings(*tossLoser, *tossWinner, adjMatrixTeam2, playerNamesTeam2);
-        } else {
-            playInnings(*tossLoser, *tossWinner, adjMatrixTeam2, playerNamesTeam2);
-            target = tossLoser->totalRuns + 1;
-            cout << "Target for " << tossWinner->name << ": " << target << "\n";
-            playInnings(*tossWinner, *tossLoser, adjMatrixTeam1, playerNamesTeam1);
-        }
-
-        declareWinner();
-        displayPartnerships(adjMatrixTeam1, team1.name, playerNamesTeam1);
-        displayPartnerships(adjMatrixTeam2, team2.name, playerNamesTeam2);
-        saveMatchHistory();
+    if (choice == "bat") {
+        // Toss winner bats first
+        playInnings(*tossWinner, *tossLoser, 
+                    (tossWinner == &team1 ? adjMatrixTeam1 : adjMatrixTeam2), 
+                    (tossWinner == &team1 ? playerNamesTeam1 : playerNamesTeam2));
+        target = tossWinner->totalRuns + 1;
+        cout << "Target for " << tossLoser->name << ": " << target << "\n";
+        // Toss loser bats second
+        playInnings(*tossLoser, *tossWinner, 
+                    (tossLoser == &team1 ? adjMatrixTeam1 : adjMatrixTeam2), 
+                    (tossLoser == &team1 ? playerNamesTeam1 : playerNamesTeam2));
+    } else {
+        // Toss loser bats first
+        playInnings(*tossLoser, *tossWinner, 
+                    (tossLoser == &team1 ? adjMatrixTeam1 : adjMatrixTeam2), 
+                    (tossLoser == &team1 ? playerNamesTeam1 : playerNamesTeam2));
+        target = tossLoser->totalRuns + 1;
+        cout << "Target for " << tossWinner->name << ": " << target << "\n";
+        // Toss winner bats second
+        playInnings(*tossWinner, *tossLoser, 
+                    (tossWinner == &team1 ? adjMatrixTeam1 : adjMatrixTeam2), 
+                    (tossWinner == &team1 ? playerNamesTeam1 : playerNamesTeam2));
     }
+
+    declareWinner();
+
+    // Display partnerships correctly
+    displayPartnerships(adjMatrixTeam1, team1.name, playerNamesTeam1);
+    displayPartnerships(adjMatrixTeam2, team2.name, playerNamesTeam2);
+
+    saveMatchHistory();
+}
+
+
 
     void declareWinner() {
         if (team2.totalRuns >= target) {
